@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <fstream>
 using namespace std;
 
 string ReadString(string message)
@@ -25,6 +26,81 @@ void resetScreen()
 {
     system("cls");
     system("color 0F");
+}
+
+struct stClient
+{
+    string AccountNumber;
+    string PinCode;
+    string Name;
+    string Phone;
+    int AccountBalance;
+};
+
+stClient ReadNewClient()
+{
+    stClient Client;
+
+    cout<< "\nEnter Account Number? ";
+    getline(cin >> ws, Client.AccountNumber);
+
+    cout<< "Enter PinCode? ";
+    getline(cin, Client.PinCode);
+
+    cout<< "Enter Name? ";
+    getline(cin, Client.Name);
+
+    cout<< "Enter Phone Number? ";
+    getline(cin, Client.Phone);
+
+    cout<< "Enter Account Balance? ";
+    cin>> Client.AccountBalance;
+
+    return Client;
+}
+
+string ConvertRecordToLine(stClient Client, string Separator = "#//#")
+{
+    string Line = "";
+
+    Line += Client.AccountNumber + Separator;
+    Line += Client.PinCode + Separator;
+    Line += Client.Name + Separator;
+    Line += Client.Phone + Separator;
+    Line += to_string(Client.AccountBalance);
+
+    return Line;
+}
+
+const string ClientFileName = "Client.txt";
+void AddDataLineToFile(stClient Client, string FileName)
+{
+    fstream MyFile;
+    MyFile.open(FileName, ios::out | ios::app);
+
+    if (MyFile.is_open())
+    {
+        MyFile<< ConvertRecordToLine(Client) <<endl;
+        MyFile.close();
+    }    
+}
+
+void AddNewClient()
+{
+    stClient Client = ReadNewClient();
+    AddDataLineToFile(Client, ClientFileName);
+}
+
+void AddClients()
+{
+    char AddMore = 'Y';
+    do
+    {
+        AddNewClient();
+        cout<< "\nClient Added Successfully, do you want to add more clients? Y/N? ";
+        cin>> AddMore;
+    } while (toupper(AddMore) == 'Y');
+    
 }
 
 enum enSection { Main = 0, ShowList = 1, AddNew = 2, Delete = 3, UpdateInfo = 4, Find = 5, Exit = 6 };
@@ -132,6 +208,28 @@ void MainSection()
     ChooseSection();
 }
 
+void ShowListSection()
+{}
+
+void AddNewSection()
+{
+    AddClients();
+}
+
+void DeleteSection()
+{}
+
+void UpdateInfoSection()
+{}
+
+void FindSection()
+{}
+
+void ExitSection(int num)
+{
+    PrintTitle(num);
+}
+
 void ChooseSection()
 {
     int num = ReadNumber("Choose what do you want to do? [1 to 6]? ");
@@ -146,6 +244,7 @@ void ChooseSection()
     case 2:
         resetScreen();
         PrintTitle(num);
+        AddNewSection();
         break;
     
     case 3:
@@ -178,5 +277,6 @@ void ChooseSection()
 
 int main()
 {
+    
     return 0;
 }
