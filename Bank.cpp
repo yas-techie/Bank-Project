@@ -147,6 +147,18 @@ vector<stClient> LoadClientsDataFromFile(string FileName)
     return vClient;
 }
 
+void PrintClientRecordList(stClient Client)
+{
+    cout << "\nThe following are the client details : \n";
+    cout<< "------------------------------------------------" <<endl;
+    cout << "Account Number : " << Client.AccountNumber << endl;
+    cout << "PinCode : " << Client.PinCode << endl;
+    cout << "Name : " << Client.Name << endl;
+    cout << "Phone : " << Client.Phone << endl;
+    cout << "Account Balance : " << Client.AccountBalance << endl;
+    cout<< "------------------------------------------------\n" <<endl;
+}
+
 void PrintClientRecord(stClient Client)
 {
     cout << "| " << left << setw(15) << Client.AccountNumber;
@@ -196,6 +208,35 @@ void AddClients()
         cin>> AddMore;
     } while (toupper(AddMore) == 'Y');
     
+}
+
+bool FindClientByAccountNumber(string AccountNumber, stClient& Client)
+{
+    vector<stClient> vClient = LoadClientsDataFromFile(ClientFileName);
+    
+    for (stClient c : vClient)
+    {
+        if (c.AccountNumber == AccountNumber)
+        {
+            Client = c;
+            return true;
+        }
+    }
+    return false;
+}
+
+void FindClient()
+{
+    stClient Client;
+    string AccountNumber = ReadString("\nPlease Enter Account Number? ");
+
+    if (FindClientByAccountNumber(AccountNumber, Client))
+    {
+
+        PrintClientRecordList(Client);
+    }
+    else
+        cout<< "\nClient with Account Number [" << AccountNumber << "] is not found!" <<endl;
 }
 
 enum enSection { Main = 0, ShowList = 1, AddNew = 2, Delete = 3, UpdateInfo = 4, Find = 5, Exit = 6 };
@@ -310,7 +351,7 @@ void ShowListSection()
     {
         vector <stClient> vClient = LoadClientsDataFromFile(ClientFileName);
         PrintAllClientsRecord(vClient);
-        cout<< "Press any key to go back to Main Menu...";
+        cout<< "\nPress any key to go back to Main Menu...";
         cin>> key;
     }
     MainSection();
@@ -328,7 +369,16 @@ void UpdateInfoSection()
 {}
 
 void FindSection()
-{}
+{
+    char key = '`';
+    if (key == '`')
+    {
+        FindClient();
+        cout<< "\nPress any key to go back to Main Menu...";
+        cin>> key;
+    }
+    MainSection();
+}
 
 void ExitSection(int num)
 {
@@ -365,6 +415,7 @@ void ChooseSection()
     case 5:
         resetScreen();
         PrintTitle(num);
+        FindSection();
         break;
     
     case 6:
