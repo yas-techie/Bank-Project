@@ -31,11 +31,12 @@ void resetScreen()
 
 struct stClient
 {
-    string AccountNumber;
-    string PinCode;
-    string Name;
-    string Phone;
-    int AccountBalance;
+    string AccountNumber = "";
+    string PinCode = "";
+    string Name = "";
+    string Phone = "";
+    int AccountBalance = 0;
+    bool MarkForDelete = false;
 };
 
 stClient ReadNewClient()
@@ -210,9 +211,9 @@ void AddClients()
     
 }
 
-bool FindClientByAccountNumber(string AccountNumber, stClient& Client)
+bool FindClientByAccountNumber(string AccountNumber, stClient& Client, vector<stClient> vClient)
 {
-    vector<stClient> vClient = LoadClientsDataFromFile(ClientFileName);
+    vClient = LoadClientsDataFromFile(ClientFileName);
     
     for (stClient c : vClient)
     {
@@ -225,14 +226,137 @@ bool FindClientByAccountNumber(string AccountNumber, stClient& Client)
     return false;
 }
 
+bool MarkClientForDeleteByAccountNumber(string AccountNumber, vector<stClient>& vClient)
+{
+    for (stClient& C : vClient)
+    {
+        if (C.AccountNumber == AccountNumber)
+        {
+            C.MarkForDelete = true;
+            return true;
+        }
+    }
+    return false;
+}
+
+vector<stClient> SaveClientsDataToFile(string FileName, vector<stClient> vClient)
+{
+    fstream MyFile;
+    MyFile.open(ClientFileName, ios::out);
+
+    string Line;
+    if (MyFile.is_open())
+    {
+        for (stClient C : vClient)
+        {
+            if (C.MarkForDelete == false)
+            {
+                Line = ConvertRecordToLine(C);
+                MyFile << Line << endl;
+            }
+        }
+        MyFile.close();
+    }
+
+    return vClient;
+}
+
+bool DeleteClientByAccountNumber(string AccountNumber, vector<stClient>& vClient)
+{
+    stClient Client;
+    vClient = LoadClientsDataFromFile(ClientFileName);
+    AccountNumber = ReadString("\nPlease Enter Account Number? ");
+    char Answer = 'n';
+
+    if (FindClientByAccountNumber(AccountNumber, Client, vClient))
+    {
+        PrintClientRecordList(Client);
+        cout << "\nAre you sure you want delete client? n/y? ";
+        cin >> Answer;
+
+        if (tolower(Answer) == 'y')
+        {
+            MarkClientForDeleteByAccountNumber(AccountNumber, vClient);
+            SaveClientsDataToFile(ClientFileName, vClient);
+
+            vClient = LoadClientsDataFromFile(ClientFileName);
+
+            cout << "\n\n Client Deleted Successfully. \n";
+            return true;
+        }
+    }
+    else
+        cout<< "\nClient with Account Number [" << AccountNumber << "] is not found!" <<endl;
+
+    return false;
+}
+
+stClient ChangeClientRecord(string AccountNumber)
+{
+    stClient Client;
+
+    Client.AccountNumber = AccountNumber;
+    
+    cout<< "\nEnter PinCode? ";
+    getline(cin >> ws, Client.PinCode);
+
+    cout<< "Enter Name? ";
+    getline(cin, Client.Name);
+
+    cout<< "Enter Phone Number? ";
+    getline(cin, Client.Phone);
+
+    cout<< "Enter Account Balance? ";
+    cin>> Client.AccountBalance;
+    
+    return Client;
+}
+
+bool UpdateClientByAccountNumber(string AccountNumber, vector<stClient>& vClient)
+{
+    stClient Client;
+    vClient = LoadClientsDataFromFile(ClientFileName);
+    AccountNumber = ReadString("\nPlease Enter Account Number? ");
+    char Answer = 'n';
+
+    if (FindClientByAccountNumber(AccountNumber, Client, vClient))
+    {
+        PrintClientRecordList(Client);
+        cout << "\nAre you sure you want update this client info? n/y? ";
+        cin >> Answer;
+
+        if (tolower(Answer) == 'y')
+        {
+            for (stClient& C : vClient)
+            {
+                if (C.AccountNumber == AccountNumber)
+                {
+                    C = ChangeClientRecord(AccountNumber);
+                    break;
+                }
+            }
+            SaveClientsDataToFile(ClientFileName, vClient);
+
+            vClient = LoadClientsDataFromFile(ClientFileName);
+
+            cout << "\n\n Client Info Updated Successfully. \n";
+            return true;
+        }
+    }
+    else
+        cout<< "\nClient with Account Number [" << AccountNumber << "] is not found!" <<endl;
+
+    return false;
+}
+
 void FindClient()
 {
     stClient Client;
+    vector<stClient> vClient = LoadClientsDataFromFile(ClientFileName);
     string AccountNumber = ReadString("\nPlease Enter Account Number? ");
 
-    if (FindClientByAccountNumber(AccountNumber, Client))
+    if (FindClientByAccountNumber(AccountNumber, Client, vClient))
     {
-
         PrintClientRecordList(Client);
     }
     else
@@ -339,6 +463,7 @@ void ChooseSection();
 
 void MainSection()
 {
+    resetScreen();
     PrintTitle();
     PrintSections();
     ChooseSection();
@@ -359,14 +484,49 @@ void ShowListSection()
 
 void AddNewSection()
 {
-    AddClients();
+    char key = '`';
+    if (key == '`')
+    {
+        AddClients();
+
+        cout<< "\nPress any key to go back to Main Menu...";
+        cin>> key;
+    }
+    MainSection();
+    
 }
 
 void DeleteSection()
-{}
+{
+    char key = '`';
+    if (key == '`')
+    {
+        vector <stClient> vClient = LoadClientsDataFromFile(ClientFileName);
+        string AccountNumber;
+
+        DeleteClientByAccountNumber(AccountNumber, vClient);
+
+        cout<< "\nPress any key to go back to Main Menu...";
+        cin>> key;
+    }
+    MainSection();
+}
 
 void UpdateInfoSection()
-{}
+{
+    char key = '`';
+    if (key == '`')
+    {
+        vector <stClient> vClient = LoadClientsDataFromFile(ClientFileName);
+        string AccountNumber;
+
+        UpdateClientByAccountNumber(AccountNumber, vClient);
+
+        cout<< "\nPress any key to go back to Main Menu...";
+        cin>> key;
+    }
+    MainSection();
+}
 
 void FindSection()
 {
@@ -405,11 +565,13 @@ void ChooseSection()
     case 3:
         resetScreen();
         PrintTitle(num);
+        DeleteSection();
         break;
     
     case 4:
         resetScreen();
         PrintTitle(num);
+        UpdateInfoSection();
         break;
     
     case 5:
@@ -420,7 +582,7 @@ void ChooseSection()
     
     case 6:
         resetScreen();
-        PrintTitle(num);
+        ExitSection(num);
         break;
     
     default:
